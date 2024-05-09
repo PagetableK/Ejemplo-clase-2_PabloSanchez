@@ -9,12 +9,13 @@ import {
   StyleSheet,
   Modal,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import z from '@react-native-community/datetimepicker';
 
 const App = () => {
   // Estados para el nombre del cliente, fecha de reserva, lista de clientes, y visibilidad del modal
   const [nombre, setNombre] = useState('');
   const [fechaReserva, setFechaReserva] = useState(new Date());
+  const [cantidadPersonas, setCantidadPersonas] = useState(1);
   const [clientes, setClientes] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -44,15 +45,30 @@ const App = () => {
   // Función para agregar un nuevo cliente
   const agregarCliente = () => {
     // Genera un nuevo cliente con un ID único (incrementa el último ID generado)
-    const nuevoCliente = { id: clientes.length + 1, nombre: nombre, fechaReserva: fechaReserva };
+    // const nuevoCliente = { id: clientes.filter((clientes) => Math.max(clientes.id)) +1, nombre: nombre, fechaReserva: fechaReserva, cantidadPersonas: cantidadPersonas };
+    const nuevoCliente = { id: calcularId(), nombre: nombre, fechaReserva: fechaReserva, cantidadPersonas: cantidadPersonas };
     // Agrega el nuevo cliente a la lista de clientes
     setClientes([...clientes, nuevoCliente]);
     // Limpia los campos de entrada
     setNombre('');
     setFechaReserva(new Date());
+    setCantidadPersonas(1);
     // Oculta el modal de agregar cliente
     setModalVisible(false);
-  };
+
+    function calcularId() {
+        if(clientes.length == 0){
+          return 1;
+        }
+        else{
+          let MaxId;
+          for(i = 0; i < clientes.length; i++){
+            MaxId = clientes[i].id;
+          }
+          return MaxId+1;
+        }
+      }
+  }
 
   // Función para eliminar un cliente
   const eliminarCliente = (id) => {
@@ -82,10 +98,18 @@ const App = () => {
               value={nombre}
               onChangeText={setNombre}
             />
+            {/* Input para la cantidad de personas */}
+            <TextInput
+              style={styles.input}
+              keyboardType='number-pad'
+              placeholder="Cantidad de personas"
+              value={cantidadPersonas}
+              onChangeText={setCantidadPersonas}
+            />
             {/* Botón para mostrar el datetimepicker */}
             <TouchableOpacity onPress={showDatepicker}><Text>Seleccionar fecha de Reserva</Text></TouchableOpacity>
             {/* Muestra la fecha seleccionada */}
-            <Text>selected: {fechaReserva.toLocaleString()}</Text>
+            <Text>Fecha seleccionada: {fechaReserva.toDateString()}</Text>
             {/* Muestra el datetimepicker si la variable show es verdadera */}
             {show && (
               <DateTimePicker
@@ -114,15 +138,22 @@ const App = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.clienteItem}
-            onPress={() => eliminarCliente(item.id)}
           >
-            
+
             {/* Muestra el ID, nombre y fecha de reserva del cliente */}
-            <Text style={styles.clienteNombre}>{item.id}</Text>
-            <Text style={styles.clienteNombre}>{item.nombre}</Text>
+            <Text style={styles.clienteNombre}>
+              {item.id}
+            </Text>
+            <Text style={styles.clienteNombre}>
+              {item.nombre}
+            </Text>
             <Text style={styles.clienteFecha}>
               Fecha de Reserva: {item.fechaReserva.toDateString()}
             </Text>
+            <Text style={styles.clienteFecha}>
+              Cantidad de personas: {item.cantidadPersonas}
+            </Text>
+            <Button color={"red"} title='X' onPress={() => eliminarCliente(item.id)}></Button>
           </TouchableOpacity>
         )}
         keyExtractor={(item) => item.id.toString()} // Extrae el ID de cada cliente como clave única
@@ -148,6 +179,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: '80%',
+    gap: 5
   },
   input: {
     height: 40,
@@ -161,7 +193,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
-    marginTop:5
+    marginTop: 5
   },
   clienteNombre: {
     fontSize: 18,
